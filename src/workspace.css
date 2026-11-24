@@ -1,0 +1,676 @@
+@layer theme, base, components, utilities;
+
+@layer components {
+  [data-slot="ace-workspace"] {
+    --ace-workspace-background: var(--background, light-dark(#fff, #171717));
+    --ace-workspace-foreground: var(--foreground, light-dark(#171717, #f5f5f5));
+    --ace-workspace-muted: var(--muted, light-dark(#f5f5f5, #262626));
+    --ace-workspace-muted-foreground: var(
+      --muted-foreground,
+      light-dark(#545454, #a3a3a3)
+    );
+    --ace-workspace-accent: var(--accent, var(--ace-workspace-muted));
+    --ace-workspace-accent-foreground: var(
+      --accent-foreground,
+      var(--ace-workspace-foreground)
+    );
+    --ace-workspace-border: var(--border, light-dark(#e5e5e5, #404040));
+    --ace-workspace-ring: var(--ring, light-dark(#737373, #a3a3a3));
+    --ace-workspace-radius: var(--radius, 0.625rem);
+
+    box-sizing: border-box;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    flex-direction: column;
+    isolation: isolate;
+    border: 1px solid var(--ace-workspace-border);
+    border-radius: var(--ace-workspace-radius);
+    background: var(--ace-workspace-background);
+    color: var(--ace-workspace-foreground);
+    font-size: 0.875rem;
+  }
+
+  :where(.dark, [data-theme="dark"]) [data-slot="ace-workspace"],
+  [data-slot="ace-workspace"]:where(.dark, [data-theme="dark"]) {
+    color-scheme: dark;
+  }
+
+  [data-slot="ace-workspace-tab-bar"] {
+    display: flex;
+    min-width: 0;
+    min-height: 2.75rem;
+    flex: none;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border-bottom: 1px solid var(--ace-workspace-border);
+    border-start-start-radius: calc(var(--ace-workspace-radius) - 1px);
+    border-start-end-radius: calc(var(--ace-workspace-radius) - 1px);
+    background: var(--ace-workspace-muted);
+  }
+
+  [data-slot="ace-workspace-tab-scroll"],
+  [data-slot="ace-workspace-tab-spacer"] {
+    min-width: 0;
+    flex: 1;
+  }
+
+  [data-slot="ace-workspace-tab-viewport"] {
+    width: 100%;
+    overscroll-behavior-x: contain;
+  }
+
+  [data-slot="ace-workspace-tab-list"] {
+    display: flex;
+    width: max-content;
+    gap: 0.25rem;
+    padding: 2px 2px 6px;
+  }
+
+  [data-slot="ace-workspace-tab-scrollbar"] {
+    box-sizing: border-box;
+    display: flex;
+    height: 6px;
+    flex-direction: column;
+    padding: 1.5px 2px;
+    touch-action: none;
+    user-select: none;
+  }
+
+  [data-slot="ace-workspace-tab-scroll-thumb"] {
+    flex: 1;
+    border-radius: 9999px;
+    background: color-mix(
+      in srgb,
+      var(--ace-workspace-muted-foreground) 50%,
+      transparent
+    );
+  }
+
+  [data-slot="ace-workspace-tab-scrollbar"]:hover
+    [data-slot="ace-workspace-tab-scroll-thumb"] {
+    background: var(--ace-workspace-muted-foreground);
+  }
+
+  [data-slot="ace-workspace-tab"] {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    max-width: min(15rem, 100%);
+    border: 1px solid transparent;
+    border-radius: calc(var(--ace-workspace-radius) - 2px);
+    color: var(--ace-workspace-muted-foreground);
+  }
+
+  [data-slot="ace-workspace-tab"]:has([data-state="active"]) {
+    border-color: var(--ace-workspace-border);
+    background: var(--ace-workspace-background);
+    color: var(--ace-workspace-foreground);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+  }
+
+  [data-slot="ace-workspace-tab"]:not(
+      :has([data-state="active"], :disabled)
+    ):hover {
+    background: var(--ace-workspace-accent);
+    color: var(--ace-workspace-accent-foreground);
+  }
+
+  [data-slot="ace-workspace-tab"][data-drop]::after {
+    position: absolute;
+    inset-block: 0.125rem;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--ace-workspace-ring);
+    content: "";
+    pointer-events: none;
+  }
+
+  [data-slot="ace-workspace-tab"][data-drop="before"]::after {
+    inset-inline-start: 0;
+  }
+  [data-slot="ace-workspace-tab"][data-drop="after"]::after {
+    inset-inline-end: 0;
+  }
+
+  [data-slot="ace-workspace-tab-trigger"],
+  [data-slot="ace-workspace-tab-close"],
+  [data-slot="ace-workspace-tab-add"] {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border: 0;
+    border-radius: calc(var(--ace-workspace-radius) - 3px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  [data-slot="ace-workspace-tab-trigger"] {
+    position: relative;
+    min-width: 0;
+    height: 1.875rem;
+    gap: 0.5rem;
+    padding: 0 0.625rem;
+    font-weight: 500;
+  }
+
+  [data-slot="ace-workspace-tab-trigger"]:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  [data-slot="ace-workspace-tab-label"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot="ace-workspace-tab-icon"] {
+    display: inline-flex;
+    flex: none;
+  }
+
+  [data-slot="ace-workspace-tab-icon"] svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  [data-slot="ace-workspace-modified"] {
+    width: 0.375rem;
+    height: 0.375rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--primary, var(--ace-workspace-ring));
+  }
+
+  [data-slot="ace-workspace-tab-close"] {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+    margin-inline: -0.25rem 0.25rem;
+    padding: 0;
+    color: var(--ace-workspace-muted-foreground);
+  }
+
+  [data-slot="ace-workspace-tab-add"] {
+    width: 1.875rem;
+    height: 1.875rem;
+    flex: none;
+    padding: 0;
+    color: var(--ace-workspace-muted-foreground);
+  }
+
+  [data-slot="ace-workspace-tab-close"] svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+  [data-slot="ace-workspace-tab-add"] svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  [data-slot="ace-workspace-tab-close"]:hover,
+  [data-slot="ace-workspace-tab-add"]:hover {
+    background: var(--ace-workspace-accent);
+    color: var(--ace-workspace-accent-foreground);
+  }
+
+  :is(
+    [data-slot="ace-workspace-tab-trigger"],
+    [data-slot="ace-workspace-tab-close"],
+    [data-slot="ace-workspace-tab-add"],
+    [data-slot="ace-workspace-panel"]
+  ):focus-visible {
+    outline: 2px solid var(--ace-workspace-ring);
+    outline-offset: -2px;
+  }
+
+  [data-slot="ace-workspace-menu"] {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-width: min(10.5rem, calc(100vw - 1rem));
+    max-width: min(19rem, calc(100vw - 1rem));
+    max-height: min(18rem, var(--radix-popper-available-height, 18rem));
+    overflow: hidden;
+    overscroll-behavior: contain;
+    border: 1px solid var(--ace-workspace-border);
+    border-radius: calc(var(--ace-workspace-radius) - 1px);
+    outline: none;
+    background: var(--popover, var(--ace-workspace-background));
+    color: var(--popover-foreground, var(--ace-workspace-foreground));
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.16);
+  }
+
+  [data-slot="ace-workspace-menu-scroll"] {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  [data-slot="ace-workspace-menu-viewport"] {
+    min-width: 0;
+    min-height: 0;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  [data-slot="ace-workspace-menu-items"] {
+    box-sizing: border-box;
+    padding: 0.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  [data-slot="ace-workspace-menu-scroll"]:has(
+      > [data-slot="ace-workspace-menu-scrollbar"]
+    )
+    [data-slot="ace-workspace-menu-items"] {
+    padding-inline-end: 0.75rem;
+  }
+
+  [data-slot="ace-workspace-menu"] [role="group"] + [role="group"] {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--ace-workspace-border);
+  }
+
+  [data-slot="ace-workspace-menu"]
+    :is([role="menuitem"], [role="menuitemradio"]) {
+    position: relative;
+    display: flex;
+    min-height: 1.75rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: calc(var(--ace-workspace-radius) - 4px);
+    outline: none;
+    font-size: 0.8125rem;
+    cursor: default;
+  }
+
+  [data-slot="ace-workspace-menu"] [data-highlighted] {
+    background: var(--ace-workspace-accent);
+    color: var(--ace-workspace-accent-foreground);
+  }
+
+  [data-slot="ace-workspace-menu"] [data-disabled] {
+    opacity: 0.5;
+  }
+  [data-slot="ace-workspace-menu"] [role="menuitemradio"] {
+    padding-inline-start: 1.5rem;
+  }
+
+  [data-slot="ace-workspace-menu-indicator"] {
+    position: absolute;
+    inset-inline-start: 0.625rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  [data-slot="ace-workspace-panel"]:not([hidden]) {
+    isolation: isolate;
+    overflow: hidden;
+    border-end-start-radius: calc(var(--ace-workspace-radius) - 1px);
+    border-end-end-radius: calc(var(--ace-workspace-radius) - 1px);
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  [data-slot="ace-workspace-panel"][data-split]:not([hidden]) {
+    display: grid;
+  }
+
+  [data-slot="ace-workspace-panel"][data-split="right"]:not([hidden]) {
+    grid-template-areas:
+      "toolbar toolbar toolbar"
+      "primary divider secondary";
+    grid-template-columns:
+      minmax(0, var(--ace-workspace-split-primary, 1fr))
+      0.375rem
+      minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  [data-slot="ace-workspace-panel"][data-split="down"]:not([hidden]) {
+    grid-template-areas:
+      "toolbar"
+      "primary"
+      "divider"
+      "secondary";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows:
+      auto
+      minmax(0, var(--ace-workspace-split-primary, 1fr))
+      0.375rem
+      minmax(0, 1fr);
+  }
+
+  [data-slot="ace-workspace-panel"][data-split]
+    > [data-slot="ace-workspace-toolbar"] {
+    grid-area: toolbar;
+  }
+
+  [data-slot="ace-workspace-panel"][data-split]
+    > [data-slot="ace-workspace-editor"] {
+    grid-area: primary;
+  }
+
+  [data-slot="ace-workspace-panel"][data-split] > [data-pane="secondary"] {
+    grid-area: secondary;
+  }
+
+  [data-slot="ace-workspace-split-handle"] {
+    --ace-workspace-divider-line: 1px;
+    grid-area: divider;
+    position: relative;
+    cursor: col-resize;
+    touch-action: none;
+    background: var(--ace-workspace-background);
+  }
+
+  [data-slot="ace-workspace-split-handle"][aria-orientation="horizontal"] {
+    cursor: row-resize;
+  }
+
+  [data-slot="ace-workspace-split-handle"]::after {
+    position: absolute;
+    background: var(--ace-workspace-border);
+    content: "";
+  }
+
+  [data-slot="ace-workspace-split-handle"][aria-orientation="vertical"]::after {
+    inset-block: 0;
+    inset-inline-start: 50%;
+    width: var(--ace-workspace-divider-line);
+  }
+
+  [data-slot="ace-workspace-split-handle"][aria-orientation="horizontal"]::after {
+    inset-inline: 0;
+    inset-block-start: 50%;
+    height: var(--ace-workspace-divider-line);
+  }
+
+  [data-slot="ace-workspace-split-handle"]:hover::after,
+  [data-slot="ace-workspace-split-handle"]:focus-visible::after {
+    --ace-workspace-divider-line: 2px;
+    background: var(--ace-workspace-ring);
+  }
+
+  [data-slot="ace-workspace-toolbar"] {
+    flex: none;
+    border-bottom: 1px solid var(--ace-workspace-border);
+  }
+
+  [data-slot="ace-workspace-editor"],
+  [data-slot="ace-workspace-content"] {
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+  }
+
+  [data-slot="ace-workspace-editor"] {
+    position: relative;
+  }
+  [data-slot="ace-workspace-content"] {
+    position: relative;
+    overflow: hidden;
+  }
+
+  [data-slot="ace-workspace-content-viewport"] {
+    position: absolute;
+    inset: 0;
+    overscroll-behavior: contain;
+  }
+
+  [data-slot="ace-workspace-content-viewport"] > div {
+    height: 100%;
+  }
+
+  :is(
+    [data-slot="ace-workspace-content-scrollbar"],
+    [data-slot="ace-workspace-menu-scrollbar"]
+  ) {
+    box-sizing: border-box;
+    display: flex;
+    touch-action: none;
+    user-select: none;
+  }
+
+  :is(
+    [data-slot="ace-workspace-content-scrollbar"],
+    [data-slot="ace-workspace-menu-scrollbar"]
+  )[data-orientation="vertical"] {
+    width: 10px;
+    padding: 2px 3px;
+  }
+
+  [data-slot="ace-workspace-content-scrollbar"][data-orientation="horizontal"] {
+    height: 10px;
+    flex-direction: column;
+    padding: 3px 2px;
+  }
+
+  :is(
+    [data-slot="ace-workspace-content-scroll-thumb"],
+    [data-slot="ace-workspace-menu-scroll-thumb"]
+  ) {
+    flex: 1;
+    border-radius: 9999px;
+    background: color-mix(
+      in srgb,
+      var(--ace-workspace-muted-foreground) 55%,
+      transparent
+    );
+  }
+
+  [data-slot="ace-workspace-content-scrollbar"]:hover
+    [data-slot="ace-workspace-content-scroll-thumb"],
+  [data-slot="ace-workspace-menu-scrollbar"]:hover
+    [data-slot="ace-workspace-menu-scroll-thumb"] {
+    background: var(--ace-workspace-muted-foreground);
+  }
+
+  [data-slot="ace-workspace-empty"] {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding: 1rem;
+    color: var(--ace-workspace-muted-foreground);
+    text-align: center;
+  }
+}
+
+/* Ace injects its positioning and typography into an unlayered style sheet. */
+[data-slot="ace-workspace-editor"] > .react-ace-workspace-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Ace measures cell padding to size the gutter and hit-test fold controls. */
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer {
+  --react-ace-annotation-end: calc(7px + var(--ace-gutter-hint-width, 0px));
+  text-align: left;
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer.ace_folding-enabled {
+  --react-ace-annotation-end: calc(14px + var(--ace-gutter-hint-width, 0px));
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer
+  > :is(.ace_gutter-cell, .ace_gutter-cell_svg-icons) {
+  padding-left: calc(19px + var(--ace-gutter-hint-width, 0px));
+  text-indent: calc(-15px - var(--ace-gutter-hint-width, 0px));
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer
+  > .ace_gutter-cell:has(> .ace_gutter_annotation[role="button"]) {
+  background-position: right var(--react-ace-annotation-end) center;
+  background-size: 14px auto;
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer
+  .ace_gutter_annotation {
+  position: absolute;
+  top: 0;
+  right: var(--react-ace-annotation-end);
+  width: 14px;
+  margin: 0;
+  float: none;
+  text-indent: 0;
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer
+  .ace_gutter_annotation
+  > :is(.ace_icon, .ace_icon_svg) {
+  width: 100%;
+}
+
+:is(.react-ace-workspace-canvas, .react-ace-gutter-hints)
+  > .ace_gutter
+  > .ace_gutter-layer
+  :is(.ace_fold-widget, .ace_custom-widget) {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  margin: 0;
+}
+
+/* Keep Ace's scroll geometry while styling its painted thumbs. */
+.react-ace-custom-scrollbars.ace_editor > :is(.ace_sb-v, .ace_sb-h) {
+  background: transparent;
+  touch-action: none;
+}
+
+.react-ace-custom-scrollbars.ace_editor > :is(.ace_sb-v, .ace_sb-h) > div {
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background: color-mix(
+      in srgb,
+      var(--ace-workspace-muted-foreground, var(--muted-foreground, GrayText))
+        55%,
+      transparent
+    )
+    padding-box;
+}
+
+.react-ace-custom-scrollbars.ace_editor
+  > :is(.ace_sb-v, .ace_sb-h):hover
+  > div {
+  background-color: var(
+    --ace-workspace-muted-foreground,
+    var(--muted-foreground, GrayText)
+  );
+}
+
+.react-ace-workspace-theme.ace_editor {
+  background: var(--ace-workspace-background);
+  color: var(--code-foreground, var(--ace-workspace-foreground));
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: var(--react-ace-line-height, 1.65);
+}
+
+.react-ace-workspace-theme .ace_gutter {
+  background: var(--ace-workspace-background);
+  color: var(--code-comment, var(--ace-workspace-muted-foreground));
+  box-shadow: inset -1px 0 var(--ace-workspace-border);
+}
+
+.react-ace-workspace-theme .ace_marker-layer .ace_selection {
+  background: var(--code-selection, light-dark(#dbeafe, #274363));
+}
+
+.react-ace-workspace-theme :is(.ace_active-line, .ace_gutter-active-line) {
+  background: var(--ace-workspace-muted);
+}
+
+.react-ace-workspace-theme .ace_cursor {
+  color: var(--code-foreground, var(--ace-workspace-foreground));
+}
+
+.react-ace-workspace-theme
+  .ace_marker-layer
+  :is(.ace_bracket, .ace_selected-word) {
+  border: 1px solid var(--ace-workspace-ring);
+}
+
+.react-ace-workspace-theme .ace_print-margin {
+  background: var(--ace-workspace-border);
+}
+.react-ace-workspace-theme :is(.ace_keyword, .ace_storage) {
+  color: var(--code-keyword, light-dark(#7e22ce, #d8b4fe));
+}
+.react-ace-workspace-theme .ace_constant {
+  color: var(--code-constant, light-dark(#1d4ed8, #93c5fd));
+}
+.react-ace-workspace-theme .ace_string {
+  color: var(--code-string, light-dark(#047857, #86efac));
+}
+.react-ace-workspace-theme .ace_support {
+  color: var(--code-support, light-dark(#9a3412, #fdba74));
+}
+.react-ace-workspace-theme .ace_comment {
+  color: var(--code-comment, var(--ace-workspace-muted-foreground));
+}
+.react-ace-workspace-theme .ace_fold {
+  background: var(--ace-workspace-ring);
+}
+
+[data-slot="ace-block-quote"] {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 1px solid
+    var(
+      --ace-block-quote-border,
+      var(--ace-workspace-ring, var(--ring, Highlight))
+    );
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+[data-slot="ace-gutter-hints"] {
+  position: absolute;
+  inset-block-start: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+[data-slot="ace-gutter-hint"] {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+[data-slot="ace-gutter-hint"] > button {
+  color: inherit;
+  cursor: pointer;
+}

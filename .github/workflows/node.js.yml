@@ -12,9 +12,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -40,10 +45,25 @@ jobs:
         run: npm run check
 
       - name: Run tests and collect coverage
-        run: npm run coverage
+        run: npm run coverage -- --run
 
       - name: Build example
         run: npm run build:example
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser regressions
+        run: npm run test:e2e
+
+      - name: Upload failed browser traces
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload example build
         if: ${{ github.ref == 'refs/heads/main' }}

@@ -1,9 +1,18 @@
+"use client";
+
 import { Ace, Range } from "ace-builds";
 import type * as AceBuilds from "ace-builds";
 import PropTypes from "prop-types";
 import * as React from "react";
 
 import { deepEqual } from "fast-equals";
+import { setAceMode } from "./ace-mode";
+import { attachAceScrollbars } from "./ace-scrollbars";
+import {
+  EditorDecorations,
+  type EditorDecorationsProps
+} from "./editor-decorations";
+import { installWorkspaceStyles } from "./workspace-styles";
 
 import {
   debounce,
@@ -20,19 +29,26 @@ import {
   IEditorProps,
   IMarker
 } from "./types";
+import type {
+  DocumentWorkspaceProps,
+  DocumentWorkspaceRef,
+  WorkspaceDocument
+} from "./workspace";
 /**
  * See https://github.com/ajaxorg/ace/wiki/Configuring-Ace
  */
 
-export interface IAceEditorProps {
+export interface IAceEditorProps extends EditorDecorationsProps {
   name?: string;
   style?: React.CSSProperties;
-  /** For available modes see https://github.com/thlorenz/brace/tree/master/mode */
+  /** Ace syntax mode. Also used as the default mode for editor documents. */
   mode?: string | object;
   /** For available themes see https://github.com/thlorenz/brace/tree/master/theme */
   theme?: string;
-  height?: string;
-  width?: string;
+  /** Pass null to size the editor with CSS. */
+  height?: string | null;
+  /** Pass null to size the editor with CSS. */
+  width?: string | null;
   className?: string;
   fontSize?: number | string;
   lineHeight?: number | string;
@@ -77,7 +93,18 @@ export interface IAceEditorProps {
   markers?: IMarker[];
 }
 
-export default class ReactAce extends React.Component<IAceEditorProps> {
+export type ReactAceProps<D extends WorkspaceDocument = WorkspaceDocument> =
+  IAceEditorProps &
+    Partial<Omit<DocumentWorkspaceProps<D>, keyof IAceEditorProps>>;
+
+let LazyDocumentWorkspace: React.LazyExoticComponent<
+  typeof import("./workspace").DocumentWorkspace
+>;
+
+export default class ReactAce<
+  D extends WorkspaceDocument = WorkspaceDocument
+> extends React.Component<ReactAceProps<D>> {
+  public static displayName = "ReactAce";
   public static propTypes: PropTypes.ValidationMap<IAceEditorProps> = {
     mode: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     focus: PropTypes.bool,
@@ -168,11 +195,21 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
   public debounce: (fn: any, delay: number) => (...args: any) => void;
   // [index: string]: any;
   public silent: boolean;
-  constructor(props: IAceEditorProps) {
+  private boundOnChange: (event: Ace.Delta) => void;
+  private detachScrollbars?: () => void;
+  private appliedClasses = new Set<string>();
+  private workspace: DocumentWorkspaceRef | null = null;
+  private getSingleEditor = () => this.editor;
+  private setWorkspace = (workspace: DocumentWorkspaceRef | null) => {
+    this.workspace = workspace;
+  };
+
+  constructor(props: ReactAceProps<D>) {
     super(props);
     editorEvents.forEach(method => {
       this[method] = this[method].bind(this);
     });
+    this.boundOnChange = this.onChange;
     this.debounce = debounce;
   }
   public isInShadow(node: HTMLElement): boolean {
@@ -186,6 +223,10 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     return false;
   }
   public componentDidMount() {
+    if (this.props.documents === undefined) this.mountEditor();
+  }
+
+  private mountEditor() {
     const {
       className,
       onBeforeLoad,
@@ -215,15 +256,11 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
       onBeforeLoad(ace);
     }
 
+    installWorkspaceStyles(ace, this.refEditor);
+
     const editorProps = Object.keys(this.props.editorProps);
     for (let i = 0; i < editorProps.length; i++) {
       this.editor[editorProps[i]] = this.props.editorProps[editorProps[i]];
-    }
-    if (this.props.debounceChangePeriod) {
-      this.onChange = this.debounce(
-        this.onChange,
-        this.props.debounceChangePeriod
-      );
     }
     this.editor.renderer.setScrollMargin(
       scrollMargin[0],
@@ -234,11 +271,7 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     if (this.isInShadow(this.refEditor)) {
       this.editor.renderer.attachToShadowRoot();
     }
-    this.editor
-      .getSession()
-      .setMode(
-        typeof mode === "string" ? `ace/mode/${mode}` : (mode as Ace.SyntaxMode)
-      );
+    setAceMode(ace, this.editor.getSession(), mode);
     if (theme && theme !== "") this.editor.setTheme(`ace/theme/${theme}`);
     this.editor.setFontSize(
       typeof fontSize === "number" ? `${fontSize}px` : fontSize
@@ -262,6 +295,13 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     this.editor.on("blur", this.onBlur);
     this.editor.on("copy", this.onCopy);
     this.editor.on("paste", this.onPaste);
+    const editor = this.editor;
+    const changePeriod = this.props.debounceChangePeriod;
+    this.onChange = changePeriod
+      ? this.debounce((event: Ace.Delta) => {
+          if (this.editor === editor) this.boundOnChange(event);
+        }, changePeriod)
+      : this.boundOnChange;
     this.editor.on("change", this.onChange);
     this.editor.on("input", this.onInput);
     if (placeholder) {
@@ -298,6 +338,7 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
       }
     });
 
+    this.detachScrollbars = attachAceScrollbars(this.editor);
     this.handleOptions(this.props);
 
     if (Array.isArray(commands)) {
@@ -314,9 +355,7 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
       this.editor.setKeyboardHandler("ace/keyboard/" + keyboardHandler);
     }
 
-    if (className) {
-      this.refEditor.className += " " + className;
-    }
+    this.updateClasses(className);
 
     if (onLoad) {
       onLoad(this.editor);
@@ -329,7 +368,16 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     }
   }
 
-  public componentDidUpdate(prevProps: IAceEditorProps) {
+  public componentDidUpdate(prevProps: ReactAceProps<D>) {
+    if (this.props.documents !== undefined) {
+      this.destroyEditor();
+      return;
+    }
+    if (prevProps.documents !== undefined) {
+      this.mountEditor();
+      return;
+    }
+
     const oldProps = prevProps;
     const nextProps = this.props;
 
@@ -342,15 +390,7 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     }
 
     if (nextProps.className !== oldProps.className) {
-      const appliedClasses = this.refEditor.className;
-      const appliedClassesArray = appliedClasses.trim().split(" ");
-      const oldClassesArray = oldProps.className.trim().split(" ");
-      oldClassesArray.forEach(oldClass => {
-        const index = appliedClassesArray.indexOf(oldClass);
-        appliedClassesArray.splice(index, 1);
-      });
-      this.refEditor.className =
-        " " + nextProps.className + " " + appliedClassesArray.join(" ");
+      this.updateClasses(nextProps.className);
     }
 
     // First process editor value, as it may create a new session (see issue #300)
@@ -372,13 +412,7 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
       this.updatePlaceholder();
     }
     if (nextProps.mode !== oldProps.mode) {
-      this.editor
-        .getSession()
-        .setMode(
-          typeof nextProps.mode === "string"
-            ? `ace/mode/${nextProps.mode}`
-            : (nextProps.mode as Ace.SyntaxMode)
-        );
+      setAceMode(ace, this.editor.getSession(), nextProps.mode);
     }
     if (nextProps.theme !== oldProps.theme) {
       this.editor.setTheme("ace/theme/" + nextProps.theme);
@@ -439,7 +473,9 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
 
     if (
       prevProps.height !== this.props.height ||
-      prevProps.width !== this.props.width
+      prevProps.width !== this.props.width ||
+      (nextProps.className !== oldProps.className &&
+        (nextProps.width === null || nextProps.height === null))
     ) {
       this.editor.resize();
     }
@@ -458,10 +494,28 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
   }
 
   public componentWillUnmount() {
+    this.destroyEditor();
+  }
+
+  private destroyEditor() {
     if (this.editor) {
+      this.detachScrollbars?.();
+      this.detachScrollbars = undefined;
       this.editor.destroy();
       this.editor = null;
     }
+  }
+
+  public getAceEditor(): Ace.Editor | null {
+    return this.workspace?.getAceEditor() ?? this.editor ?? null;
+  }
+
+  public getSplitEditor(): Ace.Editor | null {
+    return this.workspace?.getSplitEditor() ?? null;
+  }
+
+  public getSession(id: string): Ace.EditSession | undefined {
+    return this.workspace?.getSession(id);
   }
 
   public onChange(event: any) {
@@ -594,9 +648,58 @@ export default class ReactAce extends React.Component<IAceEditorProps> {
     this.refEditor = item;
   }
 
+  private updateClasses(className?: string) {
+    const nextClasses = new Set(className?.match(/\S+/g));
+    const classList = this.refEditor.classList;
+    for (const token of this.appliedClasses) {
+      if (nextClasses.has(token)) continue;
+      classList.remove(token);
+      this.appliedClasses.delete(token);
+    }
+    for (const token of nextClasses) {
+      if (classList.contains(token)) continue;
+      classList.add(token);
+      this.appliedClasses.add(token);
+    }
+  }
+
   public render() {
-    const { name, width, height, style } = this.props;
+    const { documents, onEditorLoad, onLoad } = this.props;
+    if (documents !== undefined) {
+      // Load the workspace only when needed, since Radix requires modern React.
+      LazyDocumentWorkspace ??= React.lazy(() =>
+        import("./workspace").then(({ DocumentWorkspace }) => ({
+          default: DocumentWorkspace
+        }))
+      );
+      return (
+        <React.Suspense fallback={null}>
+          <LazyDocumentWorkspace
+            {...this.props}
+            documents={documents}
+            onEditorLoad={onEditorLoad ?? onLoad}
+            ref={this.setWorkspace}
+          />
+        </React.Suspense>
+      );
+    }
+
+    const { name, width, height, style, blockQuote, renderGutterHint } =
+      this.props;
     const divStyle = { width, height, ...style };
-    return <div ref={this.updateRef} id={name} style={divStyle} />;
+    const editor = <div ref={this.updateRef} id={name} style={divStyle} />;
+    if (!React.Fragment) return editor;
+    return (
+      <React.Fragment>
+        {editor}
+        {(blockQuote || renderGutterHint) && (
+          <EditorDecorations
+            getEditor={this.getSingleEditor}
+            blockQuote={blockQuote}
+            renderGutterHint={renderGutterHint}
+          />
+        )}
+      </React.Fragment>
+    );
   }
 }

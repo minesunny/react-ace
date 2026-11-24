@@ -11,6 +11,24 @@ describe("Ace Component", () => {
       mount(<AceEditor />);
     });
 
+    it("lets CSS size the editor and preserves Ace classes when utilities change", () => {
+      const ref = React.createRef<AceEditor>();
+      const { rerender } = mount(<AceEditor ref={ref} width={null} height={null} />);
+      const root = ref.current.editor.container;
+      expect(root.style.width).toBe("");
+      expect(root.style.height).toBe("");
+
+      rerender(<AceEditor ref={ref} width={null} height={null} className="w-full\t h-80" />);
+      expect(root.classList.contains("h-80")).toBe(true);
+      rerender(<AceEditor ref={ref} width={null} height={null} className="w-full h-96" />);
+      expect(root.classList.contains("h-80")).toBe(false);
+      expect(root.classList.contains("h-96")).toBe(true);
+      rerender(<AceEditor ref={ref} />);
+      expect(root.classList.contains("h-96")).toBe(false);
+      expect(root.classList.contains("ace_editor")).toBe(true);
+      expect(root.style.height).toBe("500px");
+    });
+
     it("should trigger console warn if editorOption is called", () => {
       vi.spyOn(console, "warn");
       mount(<AceEditor enableBasicAutocompletion={true} />);
@@ -1004,10 +1022,8 @@ describe("Ace Component", () => {
       );
 
       // Read set value
-      let editor = instance?.refEditor;
-      expect(editor?.className).toEqual(
-        " ace_editor ace_hidpi ace-tm old-class"
-      );
+      const editor = instance?.refEditor;
+      expect(editor?.classList.contains("old-class")).toBe(true);
 
       // Now trigger the componentDidUpdate
       const newClassName = "new-class";
@@ -1020,10 +1036,9 @@ describe("Ace Component", () => {
         />
       );
 
-      editor = instance?.refEditor;
-      expect(editor?.className).toEqual(
-        " new-class ace_editor ace_hidpi ace-tm"
-      );
+      expect(editor?.classList.contains("new-class")).toBe(true);
+      expect(editor?.classList.contains("old-class")).toBe(false);
+      expect(editor?.classList.contains("ace_editor")).toBe(true);
     });
 
     it("should update the value on componentDidUpdate", () => {
