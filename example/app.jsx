@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { createRoot } from "react-dom/client";
-import AceEditor from "../src/ace";
-import "ace-builds/esm-resolver";
-import "ace-builds/src-noconflict/mode-jsx";
+import AceEditor from "../src";
 const languages = [
   "javascript",
   "java",
@@ -43,22 +41,6 @@ const themes = [
 /*eslint-disable no-alert, no-console */
 import "ace-builds/src-min-noconflict/ext-searchbox";
 import "ace-builds/src-min-noconflict/ext-language_tools";
-import "ace-builds/src-noconflict/mode-javascript";
-import "ace-builds/src-noconflict/mode-java";
-import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/mode-xml";
-import "ace-builds/src-noconflict/mode-ruby";
-import "ace-builds/src-noconflict/mode-sass";
-import "ace-builds/src-noconflict/mode-markdown";
-import "ace-builds/src-noconflict/mode-mysql";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/mode-html";
-import "ace-builds/src-noconflict/mode-handlebars";
-import "ace-builds/src-noconflict/mode-golang";
-import "ace-builds/src-noconflict/mode-csharp";
-import "ace-builds/src-noconflict/mode-elixir";
-import "ace-builds/src-noconflict/mode-typescript";
-import "ace-builds/src-noconflict/mode-css";
 import "ace-builds/src-noconflict/snippets/javascript";
 import "ace-builds/src-noconflict/snippets/java";
 import "ace-builds/src-noconflict/snippets/python";

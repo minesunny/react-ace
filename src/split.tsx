@@ -5,6 +5,7 @@ import {
   getAceInstance
 } from "./editorOptions";
 const ace = getAceInstance();
+import { setAceMode } from "./ace-mode";
 import { Ace, Range } from "ace-builds"; // oxlint-disable-line
 // Explicit extension and default import: Node's ESM loader neither resolves
 // extensionless subpaths nor reliably detects named exports in ext-split's
@@ -255,7 +256,7 @@ export default class SplitComponent extends React.Component<ISplitEditorProps> {
         scrollMargin[2],
         scrollMargin[3]
       );
-      editor.getSession().setMode(`ace/mode/${mode}`);
+      setAceMode(ace, editor.getSession(), mode);
       editor.setFontSize(fontSize as any);
       editor.renderer.setShowGutter(showGutter);
       editor.getSession().setUseWrapMode(wrapEnabled);
@@ -347,7 +348,7 @@ export default class SplitComponent extends React.Component<ISplitEditorProps> {
 
     split.forEach((editor: IAceEditorClass, index: number) => {
       if (nextProps.mode !== oldProps.mode) {
-        editor.getSession().setMode("ace/mode/" + nextProps.mode);
+        setAceMode(ace, editor.getSession(), nextProps.mode);
       }
       if (nextProps.keyboardHandler !== oldProps.keyboardHandler) {
         if (nextProps.keyboardHandler) {

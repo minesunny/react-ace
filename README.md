@@ -21,18 +21,27 @@ _NOTE FOR VERSION 8!_ : We have stopped support for Brace and now use Ace-builds
 
 ## Install
 
-`npm install react-ace ace-builds`
+`npm install react-ace`
 
-`yarn add react-ace ace-builds`
+`yarn add react-ace`
 
 ## Basic Usage
+
+```jsx
+import ReactAce from "react-ace";
+
+export function QueryEditor() {
+  return <ReactAce mode="sql" defaultValue="SELECT 1;" />;
+}
+```
+
+ReactAce loads its styles and the requested built-in Ace mode automatically. Pass a mode name such as `python`, `typescript`, or `markdown` to switch languages. Import additional themes and extensions when your app uses them. When serving the UMD build as a script, keep its `ace-assets/` directory alongside the script.
 
 ```javascript
 import React from "react";
 import { render } from "react-dom";
 import AceEditor from "react-ace";
 
-import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
@@ -55,11 +64,15 @@ render(
 
 ## Examples
 
-Checkout the `example` directory for a working example using webpack.
+Run `npm run example` to start the Vite examples. Open `/workspace.html` for the Tailwind and shadcn-style workspace with SQL, JSON, and a table preview in the same tab bar.
+
+Pass `documents` to the default `ReactAce` component to use workspace mode.
 
 ## Documentation
 
 [Ace Editor](https://github.com/securingsincity/react-ace/blob/master/docs/Ace.md)
+
+[Multi-document workspace and Tailwind integration](docs/Workspace.md)
 
 [Split View Editor](https://github.com/securingsincity/react-ace/blob/master/docs/Split.md)
 

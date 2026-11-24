@@ -43,3 +43,5 @@ lib
 # UMD Build
 dist
 example/static
+test-results/
+playwright-report/
